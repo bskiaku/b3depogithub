@@ -1,29 +1,39 @@
 pipeline {
     agent any
-
-    stages {
-        // stage('CleanUp de Workspace'){
-        //     steps {
-        //         cleanWs()
-        //     }
-        // }
-
-        // stage('Cloner le GitHub'){
-        //     steps {
-        //         git branch: 'main', url: 'https://github.com/srcmed/depotOnline26.git'
-        //     }
-        // }
-        stage('Install Docker'){
-            steps {
-                sh 'sudo apt autoremove docker.io docker-compose -y'
-                sh 'sudo apt update'
-                sh 'sudo apt install apt-transport-https ca-certificates curl software-properties-common -y'
-                sh 'sudo apt install docker.io -y'
-                sh 'sudo apt update'
-                sh 'sudo chmod 666 /var/run/docker.sock'
-                sh 'sudo usermod -aG docker $USER'
-                sh 'sudo systemctl status docker.service'
+        stages {
+            stage('Clean mon projet') {
+                steps {
+                    cleanWs()
+                }
+            }
+            stage('CkeckOut SCM') {
+                steps {
+                // git branch: 'main', credentialsId: 'root', url: 'https://github.com/srcmed/b3depogithub.git'
+                git branch: 'main', credentialsId: 'user-srcmed', url: 'https://github.com/srcmed/b3depogithub.git'
+                }
+            }
+            stage('install Docker.io'){
+                steps {
+                    sh 'sudo apt autoremove docker.io docker-compose -y'
+                    sh 'sudo apt update'
+                    sh 'sudo apt install apt-transport-https ca-certificates curl software-properties-common -y'
+                    sh 'sudo apt install docker.io -y'
+                    sh 'sudo apt update'
+                    sh 'sudo chmod 666 /var/run/docker.sock'
+                    sh 'sudo usermod -aG docker $USER'
+                    sh 'sudo systemctl status docker.service'
+                    sh 'sudo systemctl start docker.service'
+                }
+            }
+            stage('Test create conatianer') {
+                steps {
+                    sh 'docker image ls'
+                    sh 'docker ps'
+                    sh 'docker stop conteneur01'
+                    sh 'docker rm conteneur01'
+                    sh 'sudo docker run -d --name conteneur01 --hostname conteneur01 ubuntu/apache2'
+                    sh ' docker ps'
+                }
             }
         }
-    }
 }
