@@ -1,0 +1,12 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('CheckOut SCM') {
+            steps {
+                sh "rm -rf b3depogithub"
+                sh "git clone https://github.com/bskiaku/b3depogithub.git"
+            }
+        }
+    }
+} 
