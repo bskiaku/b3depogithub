@@ -1,0 +1,21 @@
+pipeline {
+    agent any
+    stages {
+        stage('ChekOut-SCM') {
+            steps {
+                cleanWs()
+                git branch: 'main', credentialsId: 'user-bskiaku', url: 'https://github.com/bskiaku/b3depogithub.git'
+            }
+        }
+        stage('Create-macvlan192') {
+            steps {
+                sh 'docker stop contapache01 || true'
+                sh 'docker rm contapache01 || true'
+                sh 'docker run -d --name contapache01 --hostname contapache01 -v ./volumecontapache01:/var/www/html --network macvlan192 --ip 192.168.1.20 mon-apache'
+                sh 'docker ps'
+                sh 'docker exec contapache01 ifconfig'
+                sh 'docker exec contapache01 service ssh status'
+            }
+        }
+    }
+}
