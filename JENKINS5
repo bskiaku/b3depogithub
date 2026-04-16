@@ -1,0 +1,25 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('ChekOut-SCM') {
+            steps {
+                cleanWs()
+                git branch: 'main', credentialsId: 'user-bskiaku', url: 'https://github.com/bskiaku/b3depogithub.git'
+            }
+        }
+
+        stage('create-macvlan172') {
+            steps {
+                sh 'docker network rm macvlan192 || true'
+                sh 'docker network create -d macvlan --subnet=192.168.1.0/24 --gateway=192.168.1.1 -o parent=ens33 macvlan192'
+                sh 'docker network ls'
+            }
+        }
+    }
+
+    post {
+        success { echo '✅ Réseau macvlan créé avec succès !' }
+        failure { echo '❌ Échec !' }
+    }
+}
