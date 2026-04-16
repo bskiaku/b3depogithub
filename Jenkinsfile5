@@ -1,51 +1,22 @@
-Démarré par l'utilisateur jenkins-admin
-[Pipeline] Start of Pipeline
-[Pipeline] node
-Running on Jenkins in /var/lib/jenkins/workspace/create-conteneur-apache-scipt-pipeline
-[Pipeline] {
-[Pipeline] stage
-[Pipeline] { (ChekOut-SCM)
-[Pipeline] cleanWs
-[WS-CLEANUP] Deleting project workspace...
-[WS-CLEANUP] Deferred wipeout is used...
-[WS-CLEANUP] done
-[Pipeline] git
-Selected Git installation does not exist. Using Default
-The recommended git tool is: NONE
-using credential user-bskiaku
-Cloning the remote Git repository
-Cloning repository https://github.com/bskiaku/b3depogithub.git
- > git init /var/lib/jenkins/workspace/create-conteneur-apache-scipt-pipeline # timeout=10
-Fetching upstream changes from https://github.com/bskiaku/b3depogithub.git
- > git --version # timeout=10
- > git --version # 'git version 2.34.1'
-using GIT_ASKPASS to set credentials 
- > git fetch --tags --force --progress -- https://github.com/bskiaku/b3depogithub.git +refs/heads/*:refs/remotes/origin/* # timeout=10
- > git config remote.origin.url https://github.com/bskiaku/b3depogithub.git # timeout=10
- > git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/* # timeout=10
-Avoid second fetch
- > git rev-parse refs/remotes/origin/main^{commit} # timeout=10
-Checking out Revision fd1383dd5fd7ba991bec2d92fd97863001cbcfa7 (refs/remotes/origin/main)
- > git config core.sparsecheckout # timeout=10
- > git checkout -f fd1383dd5fd7ba991bec2d92fd97863001cbcfa7 # timeout=10
- > git branch -a -v --no-abbrev # timeout=10
- > git checkout -b main fd1383dd5fd7ba991bec2d92fd97863001cbcfa7 # timeout=10
-Commit message: "Add Jenkins pipeline for macvlan network creation"
- > git rev-list --no-walk d18e954de51da52fc631ac7de898910da35f6274 # timeout=10
-[Pipeline] }
-[Pipeline] // stage
-[Pipeline] stage
-[Pipeline] { (create-macvlan172)
-[Pipeline] sh
-+ docker run -d --name contapache01 --hostname contapache01 -v ./volumecontapache01:/var/www/html -d macvlan --network macvlan192 -ip 192.168.1.20 mon-apache
-Unable to find image 'macvlan:latest' locally
-docker: Error response from daemon: pull access denied for macvlan, repository does not exist or may require 'docker login'
-
-Run 'docker run --help' for more information
-[Pipeline] }
-[Pipeline] // stage
-[Pipeline] }
-[Pipeline] // node
-[Pipeline] End of Pipeline
-ERROR: script returned exit code 125
-Finished: FAILURE
+pipeline {
+    agent any
+    stages {
+        stage('ChekOut-SCM') {
+            steps {
+                cleanWs()
+                git branch: 'main', credentialsId: 'user-bskiaku', url: 'https://github.com/bskiaku/b3depogithub.git'
+            }
+        }
+        stage('create-macvlan172') {
+            steps {
+                sh 'docker network rm macvlan192 || true'
+                sh 'docker network create -d macvlan --subnet=192.168.1.0/24 --gateway=192.168.1.1 -o parent=ens33 macvlan192'
+                sh 'docker network ls'
+            }
+        }
+    }
+    post {
+        success { echo '✅ Réseau macvlan créé avec succès !' }
+        failure { echo '❌ Échec !' }
+    }
+}
