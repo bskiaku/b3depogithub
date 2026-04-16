@@ -1,39 +1,55 @@
 pipeline {
     agent any
-        stages {
-            stage('Clean mon projet') {
-                steps {
-                    cleanWs()
-                }
-            }
-            stage('CkeckOut SCM') {
-                steps {
-                // git branch: 'main', credentialsId: 'root', url: 'https://github.com/srcmed/b3depogithub.git'
-                git branch: 'main', credentialsId: 'user-srcmed', url: 'https://github.com/srcmed/b3depogithub.git'
-                }
-            }
-            stage('install Docker.io'){
-                steps {
-                    sh 'sudo apt autoremove docker.io docker-compose -y'
-                    sh 'sudo apt update'
-                    sh 'sudo apt install apt-transport-https ca-certificates curl software-properties-common -y'
-                    sh 'sudo apt install docker.io -y'
-                    sh 'sudo apt update'
-                    sh 'sudo chmod 666 /var/run/docker.sock'
-                    sh 'sudo usermod -aG docker $USER'
-                    sh 'sudo systemctl status docker.service'
-                    sh 'sudo systemctl start docker.service'
-                }
-            }
-            stage('Test create conatianer') {
-                steps {
-                    sh 'docker image ls'
-                    sh 'docker ps'
-                    sh 'docker stop conteneur01'
-                    sh 'docker rm conteneur01'
-                    sh 'sudo docker run -d --name conteneur01 --hostname conteneur01 ubuntu/apache2'
-                    sh ' docker ps'
-                }
+
+    stages {
+        stage('Clean mon projet') {
+            steps {
+                cleanWs()
             }
         }
+
+        stage('CkeckOut SCM') {
+            steps {
+                git branch: 'main', credentialsId: 'user-srcmed', url: 'https://github.com/srcmed/b3depogithub.git'
+            }
+        }
+
+        stage('Fix dépôts') {
+            steps {
+                sh '''
+                    sudo rm -f /etc/apt/sources.list.d/jenkins.list
+                    sudo rm -f /etc/apt/sources.list.d/docker.sources
+                    sudo rm -f /etc/apt/sources.list.d/docker.list
+                    sudo apt update
+                '''
+            }
+        }
+
+        stage('Install Docker.io') {
+            steps {
+                sh 'sudo apt install -y apt-transport-https ca-certificates curl software-properties-common'
+                sh 'sudo apt install -y docker.io'
+                sh 'sudo chmod 666 /var/run/docker.sock'
+                sh 'sudo usermod -aG docker $USER'
+                sh 'sudo systemctl start docker.service'
+                sh 'sudo systemctl status docker.service'
+            }
+        }
+
+        stage('Test create container') {
+            steps {
+                sh 'docker image ls'
+                sh 'docker ps'
+                sh 'docker stop conteneur01 || true'
+                sh 'docker rm conteneur01 || true'
+                sh 'docker run -d --name conteneur01 --hostname conteneur01 ubuntu/apache2'
+                sh 'docker ps'
+            }
+        }
+    }
+
+    post {
+        success { echo '✅ Docker installé avec succès !' }
+        failure { echo '❌ Échec du pipeline !' }
+    }
 }
