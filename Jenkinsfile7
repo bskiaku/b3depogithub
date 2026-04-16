@@ -4,7 +4,7 @@ pipeline {
         stage('ChekOut-SCM') {
             steps {
                 cleanWs()
-                git branch: 'main', credentialsId: 'user-srcmed', url: 'https://github.com/srcmed/b3depogithub.git'
+                git branch: 'main', credentialsId: 'user-bskiaku', url: 'https://github.com/bskiaku/b3depogithub.git'
             }
         }
         stage('Create-conteneur') {
